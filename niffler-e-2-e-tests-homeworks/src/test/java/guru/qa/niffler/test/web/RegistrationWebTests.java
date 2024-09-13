@@ -1,12 +1,13 @@
 package guru.qa.niffler.test.web;
 
-import com.codeborne.selenide.Selenide;
 import com.github.javafaker.Faker;
 import guru.qa.niffler.config.Config;
 import guru.qa.niffler.jupiter.BrowserExtension;
 import guru.qa.niffler.page.LoginPage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
+import static com.codeborne.selenide.Selenide.open;
 
 @ExtendWith(BrowserExtension.class)
 public class RegistrationWebTests {
@@ -18,7 +19,7 @@ public class RegistrationWebTests {
     final String username = new Faker().name().username();
     final String password = "secret";
 
-    Selenide.open(CFG.frontUrl(), LoginPage.class)
+    open(CFG.frontUrl(), LoginPage.class)
         .clickCreateNewAccount()
         .fillRegistrationForm(username, password, password)
         .submitRegistration()
@@ -31,14 +32,14 @@ public class RegistrationWebTests {
     final String password = "secret";
 
     // Register First User
-    Selenide.open(CFG.frontUrl(), LoginPage.class)
+    open(CFG.frontUrl(), LoginPage.class)
         .clickCreateNewAccount()
         .fillRegistrationForm(username, password, password)
         .submitRegistration()
         .checkYouHaveRegisteredIsDisplayed();
 
     // Register Second User
-    Selenide.open(CFG.frontUrl(), LoginPage.class)
+    open(CFG.frontUrl(), LoginPage.class)
         .clickCreateNewAccount()
         .fillRegistrationForm(username, password, password)
         .submitRegistration()
@@ -47,15 +48,45 @@ public class RegistrationWebTests {
 
   @Test
   void shouldShowErrorIfPasswordAndConfirmPasswordAreNotEqual() {
+    final String username = new Faker().name().username();
+    final String password1 = "secret";
+    final String password2 = "terces";
+
+    open(CFG.frontUrl(), LoginPage.class)
+        .clickCreateNewAccount()
+        .fillRegistrationForm(username, password1, password2)
+        .submitRegistration()
+        .checkPasswordsShouldBeEqualIsDisplayed();
   }
 
   @Test
   void mainPageShouldBeDisplayedAfterSuccessLogin() {
+    final String username = new Faker().name().username();
+    final String password = "secret";
 
+    open(CFG.frontUrl(), LoginPage.class)
+        .clickCreateNewAccount()
+        .fillRegistrationForm(username, password, password)
+        .submitRegistration()
+        .clickSignIn()
+        .login(username, password)
+
+        .mainPage().checkThatPageLoaded();
   }
 
   @Test
   void userShouldStayOnLoginPageAfterLoginWithBadCredentials() {
+    final String username = new Faker().name().username();
+    final String password = "secret";
+    final String wrongPassword = "terces";
 
+    open(CFG.frontUrl(), LoginPage.class)
+        .clickCreateNewAccount()
+        .fillRegistrationForm(username, password, password)
+        .submitRegistration()
+        .clickSignIn()
+        .login(username, wrongPassword)
+
+        .checkBadCredentialsIsDisplayed();
   }
 }

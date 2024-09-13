@@ -16,7 +16,8 @@ public class RegistrationPage {
       passwordSubmitFld = $("#passwordSubmit"),
       signUpBtn = $("button[type='submit']"),
       formError = $(".form__error"),
-      youHaveRegistered = $(byText("Congratulations! You've registered!"));
+      youHaveRegistered = $(byText("Congratulations! You've registered!")),
+      signInBtn = $(byText("Sign in"));
 
   public RegistrationPage checkThatPageLoaded() {
     header.shouldHave(text("Registration form"));
@@ -52,11 +53,22 @@ public class RegistrationPage {
     return this;
   }
 
-  public void checkYouHaveRegisteredIsDisplayed() {
+  public RegistrationPage checkYouHaveRegisteredIsDisplayed() {
     youHaveRegistered.shouldBe(visible);
+    return this;
   }
 
   public void checkUsernameAlreadyExistsErrorIsDisplayed(String username) {
     formError.shouldHave(text("Username `" + username + "` already exists"));
   }
+
+  public void checkPasswordsShouldBeEqualIsDisplayed() {
+    formError.shouldHave(text("Passwords should be equal"));
+  }
+
+  public LoginPage clickSignIn() {
+    signInBtn.click();
+    return new LoginPage();
+  }
+
 }

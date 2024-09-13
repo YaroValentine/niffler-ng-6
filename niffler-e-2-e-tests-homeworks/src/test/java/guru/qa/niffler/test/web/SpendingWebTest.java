@@ -27,7 +27,7 @@ public class SpendingWebTest {
 
     Selenide.open(CFG.frontUrl(), LoginPage.class)
         .login("yaro", "secret")
-        .editSpending(spend.description())
+        .mainPage().editSpending(spend.description())
         .setNewSpendingDescription(newDescription)
         .save();
 
