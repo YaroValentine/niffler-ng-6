@@ -55,4 +55,8 @@ public class RegistrationPage {
   public void checkYouHaveRegisteredIsDisplayed() {
     youHaveRegistered.shouldBe(visible);
   }
+
+  public void checkUsernameAlreadyExistsErrorIsDisplayed(String username) {
+    formError.shouldHave(text("Username `" + username + "` already exists"));
+  }
 }

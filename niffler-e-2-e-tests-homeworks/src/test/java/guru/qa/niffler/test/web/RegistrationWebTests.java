@@ -27,6 +27,22 @@ public class RegistrationWebTests {
 
   @Test
   void shouldNotRegisterUserWithExistingUsername() {
+    final String username = new Faker().name().username();
+    final String password = "secret";
+
+    // Register First User
+    Selenide.open(CFG.frontUrl(), LoginPage.class)
+        .clickCreateNewAccount()
+        .fillRegistrationForm(username, password, password)
+        .submitRegistration()
+        .checkYouHaveRegisteredIsDisplayed();
+
+    // Register Second User
+    Selenide.open(CFG.frontUrl(), LoginPage.class)
+        .clickCreateNewAccount()
+        .fillRegistrationForm(username, password, password)
+        .submitRegistration()
+        .checkUsernameAlreadyExistsErrorIsDisplayed(username);
   }
 
   @Test
