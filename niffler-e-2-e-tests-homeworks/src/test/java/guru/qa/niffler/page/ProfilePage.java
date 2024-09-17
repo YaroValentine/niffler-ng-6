@@ -1,5 +1,6 @@
 package guru.qa.niffler.page;
 
+import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
 import guru.qa.niffler.model.CurrencyValues;
 import io.qameta.allure.Step;
@@ -9,10 +10,11 @@ import java.io.File;
 import static com.codeborne.selenide.Condition.*;
 import static com.codeborne.selenide.Selectors.byText;
 import static com.codeborne.selenide.Selenide.$;
+import static com.codeborne.selenide.Selenide.$x;
 
 public class ProfilePage {
 
-  public final static String URL = "/profile";
+  public final static String URL = "http://127.0.0.1:3000/profile";
 
   final SelenideElement
       profileAvatar = $("profile__avatar"),
@@ -23,7 +25,14 @@ public class ProfilePage {
       categoryNameFld = $(byText("Add new category")),
       createBtn = $(byText("Create")),
       chooseFileForAvatarBtn = $("edit-avatar__input"),
-      spendingCategoriesTbl = $(".main-content__section-categories ul");
+      spendingCategoriesTbl = $(".main-content__section-categories ul"),
+      showArchivedTgl = $x("//input[@type='checkbox']");
+
+
+  public ProfilePage open() {
+    Selenide.open(URL);
+    return this;
+  }
 
   public ProfilePage checkThatPageLoaded() {
     profileAvatar.should(visible);
@@ -96,7 +105,6 @@ public class ProfilePage {
     return this;
   }
 
-
   @Step("Verify Currency selected: {name}")
   public ProfilePage verifyCurrencyEquals(CurrencyValues currency) {
     SelenideElement selectedCurrency = $("div.css-1dimb5e-singleValue");
@@ -104,5 +112,14 @@ public class ProfilePage {
     return this;
   }
 
+  public ProfilePage clickShowArchivedCategories() {
+    showArchivedTgl.click();
+    return this;
+  }
+
+  public ProfilePage verifyCategoryExists(String category) {
+    $x(String.format("//span[text()='%s']", category)).should(exist);
+    return this;
+  }
 
 }
