@@ -18,17 +18,7 @@ public class QuickTest {
   @Test
   void quickTest() {
 
-    List<CategoryJson> categories = spendApiClient.getAllCategories("yaro", false);
-    CategoryJson categoryJson = categories.get(1);
-    if (categoryJson != null) {
-      CategoryJson updatedCategory = new CategoryJson(
-          categoryJson.id(),
-          categoryJson.name(),
-          categoryJson.username(),
-          true
-      );
-      spendApiClient.updateCategory(updatedCategory);
-    }
+    System.out.println(System.getenv("GITHUB_TOKEN"));
   }
 
 
