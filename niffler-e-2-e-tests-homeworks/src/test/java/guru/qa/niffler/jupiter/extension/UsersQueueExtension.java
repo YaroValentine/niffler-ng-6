@@ -9,10 +9,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Optional;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -45,14 +42,13 @@ public class UsersQueueExtension implements
     boolean empty() default true;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public void beforeTestExecution(ExtensionContext context) {
     Arrays.stream(context.getRequiredTestMethod().getParameters())
         .filter(parameter -> AnnotationSupport.isAnnotated(parameter, UserType.class))
-        .findFirst()
-        .map(parameter -> parameter.getAnnotation(UserType.class))
-        .ifPresent(userType -> {
-          // Get proper type of user from queue
+        .forEach(parameter -> {
+          UserType userType = parameter.getAnnotation(UserType.class);
           Optional<StaticUser> user = Optional.empty();
           StopWatch sw = StopWatch.createStarted(); // Wait for user for 30s
           while (user.isEmpty() && sw.getTime(TimeUnit.SECONDS) < 30) {
@@ -65,11 +61,12 @@ public class UsersQueueExtension implements
               testCase.setStart(new Date().getTime())
           );
           user.ifPresentOrElse(
-              usr ->
-                  context.getStore(NAMESPACE).put(
-                      context.getUniqueId(),
-                      usr
-                  ),
+              usr -> {
+                // Store the user in the context store
+                Map<UserType, StaticUser> map = context.getStore(NAMESPACE)
+                    .getOrComputeIfAbsent(context.getUniqueId(), key -> new HashMap<UserType, StaticUser>(), Map.class);
+                map.put(userType, usr);
+              },
               () -> {
                 throw new IllegalStateException("Could`t obtain User after 30s.");
               }
@@ -77,30 +74,46 @@ public class UsersQueueExtension implements
         });
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public void afterTestExecution(ExtensionContext context) {
     // Put User back into queue
-    StaticUser user = context.getStore(NAMESPACE).get(
+    // 1. Retrieve the map of users from the store
+    Map<UserType, StaticUser> map = context.getStore(NAMESPACE).get(
         context.getUniqueId(),
-        StaticUser.class
+        Map.class
     );
-    if (user.empty()) {
-      EMPTY_USERS.add(user);
-    } else {
-      NOT_EMPTY_USERS.add(user);
-    }
+
+    // 2. Iterate over the map entries and put users back into the appropriate queue
+    for (Map.Entry<UserType, StaticUser> e : map.entrySet()) {
+      if (e.getValue().empty()) {
+        EMPTY_USERS.add(e.getValue());
+      } else {
+        NOT_EMPTY_USERS.add(e.getValue());
+      }
   }
+    }
 
   @Override
   public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
     return parameterContext.getParameter().getType().isAssignableFrom(StaticUser.class)
-        && AnnotationSupport.isAnnotated(parameterContext.getParameter(), UserType.class);
+           && AnnotationSupport.isAnnotated(parameterContext.getParameter(), UserType.class);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public StaticUser resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-    return extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId(), StaticUser.class);
+    UserType userType = parameterContext.getParameter().getAnnotation(UserType.class);
+    Map<UserType, StaticUser> userMap = (Map<UserType, StaticUser>) extensionContext.getStore(NAMESPACE)
+        .get(extensionContext.getUniqueId());
+    return userMap.get(userType);
   }
+
+//  @Override
+//  public StaticUser resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
+//    return extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId() + parameterContext.getParameter().getName(), StaticUser.class);
+//  }
+
 
   // User Queue Example with different types of users
   // https://github.com/YaroValentine/niffler-st2/blob/master/niffler-e-2-e-homeworks/src/test/java/niffler/jupiter/extensions/UsersQueueExtension.java
