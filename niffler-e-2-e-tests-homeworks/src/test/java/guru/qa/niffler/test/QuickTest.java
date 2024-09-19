@@ -46,6 +46,13 @@ public class QuickTest {
     System.out.println("Test3");
   }
 
+  @SneakyThrows
+  @Test
+  void testWithNotEmptyUser3() {
+    Thread.sleep(1000);
+    System.out.println("Test4");
+  }
+
 
 
 }

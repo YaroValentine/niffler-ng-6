@@ -20,8 +20,10 @@ public class UsersQueueExtension implements
 
   public static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(UsersQueueExtension.class);
 
-  public record StaticUser(String username, String password, boolean empty) {
-  }
+  public record StaticUser(
+      String username,
+      String password,
+      boolean empty) {}
 
   private static final Queue<StaticUser> EMPTY_USERS = new ConcurrentLinkedQueue<>();
   private static final Queue<StaticUser> NOT_EMPTY_USERS = new ConcurrentLinkedQueue<>();
@@ -74,25 +76,28 @@ public class UsersQueueExtension implements
         });
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public void afterTestExecution(ExtensionContext context) {
-    // Put User back into queue
-    // 1. Retrieve the map of users from the store
+    // Retrieve the map of users from the store
     Map<UserType, StaticUser> map = context.getStore(NAMESPACE).get(
         context.getUniqueId(),
         Map.class
     );
 
-    // 2. Iterate over the map entries and put users back into the appropriate queue
+    // Check if the map is null or empty
+    if (map == null || map.isEmpty()) {
+      return; // Skip if no users were stored
+    }
+
+    // Iterate over the map entries and put users back into the appropriate queue
     for (Map.Entry<UserType, StaticUser> e : map.entrySet()) {
       if (e.getValue().empty()) {
         EMPTY_USERS.add(e.getValue());
       } else {
         NOT_EMPTY_USERS.add(e.getValue());
       }
-  }
     }
+  }
 
   @Override
   public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
@@ -109,12 +114,4 @@ public class UsersQueueExtension implements
     return userMap.get(userType);
   }
 
-//  @Override
-//  public StaticUser resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-//    return extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId() + parameterContext.getParameter().getName(), StaticUser.class);
-//  }
-
-
-  // User Queue Example with different types of users
-  // https://github.com/YaroValentine/niffler-st2/blob/master/niffler-e-2-e-homeworks/src/test/java/niffler/jupiter/extensions/UsersQueueExtension.java
 }
