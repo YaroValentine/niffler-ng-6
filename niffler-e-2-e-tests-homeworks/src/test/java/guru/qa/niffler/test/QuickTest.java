@@ -20,38 +20,7 @@ public class QuickTest {
 //  private final SpendApiClient spendApiClient = new SpendApiClient();
 
 
-  @SneakyThrows
-  @Test
-  void testWithEmptyUser0(@UserType(empty = true) StaticUser user1,
-                          @UserType(empty = false) StaticUser user2) {
-    Thread.sleep(1000);
-    System.out.println(user1);
-    System.out.println(user2);
-    System.out.println("Test1");
-  }
 
-  @SneakyThrows
-  @Test
-  void testWithNotEmptyUser1(@UserType(empty = false) StaticUser user) {
-    Thread.sleep(1000);
-    System.out.println(user);
-    System.out.println("Test2");
-  }
-
-  @SneakyThrows
-  @Test
-  void testWithNotEmptyUser2(@UserType(empty = false) StaticUser user) {
-    Thread.sleep(1000);
-    System.out.println(user);
-    System.out.println("Test3");
-  }
-
-  @SneakyThrows
-  @Test
-  void testWithNotEmptyUser3() {
-    Thread.sleep(1000);
-    System.out.println("Test4");
-  }
 
 
 

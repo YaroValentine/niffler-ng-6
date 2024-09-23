@@ -23,78 +23,93 @@ public class UsersQueueExtension implements
   public record StaticUser(
       String username,
       String password,
-      boolean empty) {}
+      String friend,
+      String income,
+      String outcome) {
+
+  }
 
   private static final Queue<StaticUser> EMPTY_USERS = new ConcurrentLinkedQueue<>();
-  private static final Queue<StaticUser> NOT_EMPTY_USERS = new ConcurrentLinkedQueue<>();
+  private static final Queue<StaticUser> WITH_FRIEND_USERS = new ConcurrentLinkedQueue<>();
+  private static final Queue<StaticUser> WITH_INCOME_REQUEST_USERS = new ConcurrentLinkedQueue<>();
+  private static final Queue<StaticUser> WITH_OUTCOME_REQUEST_USERS = new ConcurrentLinkedQueue<>();
 
   static {
-    EMPTY_USERS.add(new StaticUser("lapa", "secret", true));
-    EMPTY_USERS.add(new StaticUser("lena", "secret", true));
-    NOT_EMPTY_USERS.add(new StaticUser("yaro", "secret", false));
-    NOT_EMPTY_USERS.add(new StaticUser("olga", "secret", false));
-    NOT_EMPTY_USERS.add(new StaticUser("dima", "secret", false));
-    NOT_EMPTY_USERS.add(new StaticUser("dan", "secret", false));
-    NOT_EMPTY_USERS.add(new StaticUser("jack", "secret", false));
+    EMPTY_USERS.add(new StaticUser("lapa", "secret", null, null, null));
+    EMPTY_USERS.add(new StaticUser("lena", "secret", null, null, null));
+    WITH_FRIEND_USERS.add(new StaticUser("yaro", "secret", "olga", null, null));
+    WITH_FRIEND_USERS.add(new StaticUser("olga", "secret", "yaro", null, null));
+
+    WITH_INCOME_REQUEST_USERS.add(new StaticUser("dima", "secret", null, "yaro", null));
+    WITH_INCOME_REQUEST_USERS.add(new StaticUser("jack", "secret", null, "yaro", null));
+    WITH_INCOME_REQUEST_USERS.add(new StaticUser("dan", "secret", null, "olga", null));
+    WITH_INCOME_REQUEST_USERS.add(new StaticUser("yaro", "secret", null, "lapa", null));
+
+    WITH_OUTCOME_REQUEST_USERS.add(new StaticUser("lapa", "secret", null, null, "yaro"));
+    WITH_OUTCOME_REQUEST_USERS.add(new StaticUser("yaro", "secret", null, null, "dima"));
+    WITH_OUTCOME_REQUEST_USERS.add(new StaticUser("olga", "secret", null, null, "dan"));
+    WITH_OUTCOME_REQUEST_USERS.add(new StaticUser("yaro ", "secret", null, null, "jack"));
   }
 
   @Target(ElementType.PARAMETER)
   @Retention(RetentionPolicy.RUNTIME)
   public @interface UserType {
-    boolean empty() default true;
+    Type value() default Type.EMPTY;
+
+    enum Type {
+      EMPTY, WITH_FRIEND, WITH_INCOME_REQUEST, WITH_OUTCOME_REQUEST
+    }
+
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public void beforeTestExecution(ExtensionContext context) {
     Arrays.stream(context.getRequiredTestMethod().getParameters())
-        .filter(parameter -> AnnotationSupport.isAnnotated(parameter, UserType.class))
-        .forEach(parameter -> {
-          UserType userType = parameter.getAnnotation(UserType.class);
+        .filter(p -> AnnotationSupport.isAnnotated(p, UserType.class) && p.getType().isAssignableFrom(StaticUser.class))
+        .map(p -> p.getAnnotation(UserType.class))
+        .forEach(ut -> {
           Optional<StaticUser> user = Optional.empty();
-          StopWatch sw = StopWatch.createStarted(); // Wait for user for 30s
+          StopWatch sw = StopWatch.createStarted();
           while (user.isEmpty() && sw.getTime(TimeUnit.SECONDS) < 30) {
-            user = userType.empty()
-                ? Optional.ofNullable(EMPTY_USERS.poll())
-                : Optional.ofNullable(NOT_EMPTY_USERS.poll());
+            user = switch (ut.value()) {
+              case EMPTY -> Optional.ofNullable(EMPTY_USERS.poll());
+              case WITH_FRIEND -> Optional.ofNullable(WITH_FRIEND_USERS.poll());
+              case WITH_INCOME_REQUEST -> Optional.ofNullable(WITH_INCOME_REQUEST_USERS.poll());
+              case WITH_OUTCOME_REQUEST -> Optional.ofNullable(WITH_OUTCOME_REQUEST_USERS.poll());
+            };
           }
-          // Reset Allure test execution time to the time when User was pulled from queue
           Allure.getLifecycle().updateTestCase(testCase ->
               testCase.setStart(new Date().getTime())
           );
           user.ifPresentOrElse(
-              usr -> {
-                // Store the user in the context store
-                Map<UserType, StaticUser> map = context.getStore(NAMESPACE)
-                    .getOrComputeIfAbsent(context.getUniqueId(), key -> new HashMap<UserType, StaticUser>(), Map.class);
-                map.put(userType, usr);
-              },
+              u ->
+                  ((Map<UserType, StaticUser>) context.getStore(NAMESPACE).getOrComputeIfAbsent(
+                      context.getUniqueId(),
+                      key -> new HashMap<>()
+                  )).put(ut, u),
               () -> {
-                throw new IllegalStateException("Could`t obtain User after 30s.");
+                throw new IllegalStateException("Can`t obtain user after 30s.");
               }
           );
         });
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public void afterTestExecution(ExtensionContext context) {
-    // Retrieve the map of users from the store
     Map<UserType, StaticUser> map = context.getStore(NAMESPACE).get(
         context.getUniqueId(),
         Map.class
     );
-
-    // Check if the map is null or empty
-    if (map == null || map.isEmpty()) {
-      return; // Skip if no users were stored
-    }
-
-    // Iterate over the map entries and put users back into the appropriate queue
-    for (Map.Entry<UserType, StaticUser> e : map.entrySet()) {
-      if (e.getValue().empty()) {
-        EMPTY_USERS.add(e.getValue());
-      } else {
-        NOT_EMPTY_USERS.add(e.getValue());
+    if (map != null) {
+      for (Map.Entry<UserType, StaticUser> e : map.entrySet()) {
+        switch (e.getKey().value()) {
+          case EMPTY -> EMPTY_USERS.add(e.getValue());
+          case WITH_FRIEND -> WITH_FRIEND_USERS.add(e.getValue());
+          case WITH_INCOME_REQUEST -> WITH_INCOME_REQUEST_USERS.add(e.getValue());
+          case WITH_OUTCOME_REQUEST -> WITH_OUTCOME_REQUEST_USERS.add(e.getValue());
+        }
       }
     }
   }
@@ -105,13 +120,11 @@ public class UsersQueueExtension implements
            && AnnotationSupport.isAnnotated(parameterContext.getParameter(), UserType.class);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public StaticUser resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) throws ParameterResolutionException {
-    UserType userType = parameterContext.getParameter().getAnnotation(UserType.class);
-    Map<UserType, StaticUser> userMap = (Map<UserType, StaticUser>) extensionContext.getStore(NAMESPACE)
-        .get(extensionContext.getUniqueId());
-    return userMap.get(userType);
+    return (StaticUser) extensionContext.getStore(NAMESPACE).get(extensionContext.getUniqueId(), Map.class)
+        .get(
+            AnnotationSupport.findAnnotation(parameterContext.getParameter(), UserType.class).get()
+        );
   }
-
 }
