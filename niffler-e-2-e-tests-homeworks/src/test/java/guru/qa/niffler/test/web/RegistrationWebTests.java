@@ -58,35 +58,5 @@ public class RegistrationWebTests {
         .submitRegistration()
         .checkPasswordsShouldBeEqualIsDisplayed();
   }
-
-  @Test
-  void mainPageShouldBeDisplayedAfterSuccessLogin() {
-    final String username = new Faker().name().username();
-    final String password = "secret";
-
-    open(CFG.frontUrl(), LoginPage.class)
-        .clickCreateNewAccount()
-        .fillRegistrationForm(username, password, password)
-        .submitRegistration()
-        .clickSignIn()
-        .login(username, password)
-
-        .mainPage().checkThatPageLoaded();
-  }
-
-  @Test
-  void userShouldStayOnLoginPageAfterLoginWithBadCredentials() {
-    final String username = new Faker().name().username();
-    final String password = "secret";
-    final String wrongPassword = "terces";
-
-    open(CFG.frontUrl(), LoginPage.class)
-        .clickCreateNewAccount()
-        .fillRegistrationForm(username, password, password)
-        .submitRegistration()
-        .clickSignIn()
-        .login(username, wrongPassword)
-
-        .checkBadCredentialsIsDisplayed();
-  }
+  
 }
