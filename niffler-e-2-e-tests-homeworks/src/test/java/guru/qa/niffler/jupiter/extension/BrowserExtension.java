@@ -16,6 +16,7 @@ public class BrowserExtension implements
     AfterEachCallback,
     TestExecutionExceptionHandler,
     LifecycleMethodExecutionExceptionHandler {
+
   @Override
   public void afterEach(ExtensionContext context) throws Exception {
     if (WebDriverRunner.hasWebDriverStarted()) {

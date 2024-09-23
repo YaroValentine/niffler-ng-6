@@ -18,6 +18,8 @@ public class CreateCategoryExtension implements
 
   @Override
   public void beforeEach(ExtensionContext context) throws Exception {
+    // Set Up:
+    // Add random category before test
     AnnotationSupport.findAnnotation(context.getRequiredTestMethod(), Category.class)
         .ifPresent(annotation -> {
           CategoryJson category = new CategoryJson(
