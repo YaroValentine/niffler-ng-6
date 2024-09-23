@@ -7,6 +7,8 @@ public class BasePage {
   private ProfilePage profilePage;
   private RegistrationPage registrationPage;
   private EditSpendingPage editSpendingPage;
+  private FriendsPage friendsPage;
+  private PeoplePage peoplePage;
 
   public LoginPage loginPage() {
     return loginPage == null ? loginPage = new LoginPage() : loginPage;
@@ -28,4 +30,11 @@ public class BasePage {
     return editSpendingPage == null ? editSpendingPage = new EditSpendingPage() : editSpendingPage;
   }
 
+  public FriendsPage friendsPage() {
+    return friendsPage == null ? friendsPage = new FriendsPage() : friendsPage;
+  }
+
+  public PeoplePage allPeoplePage() {
+    return peoplePage == null ? peoplePage = new PeoplePage() : peoplePage;
+  }
 }

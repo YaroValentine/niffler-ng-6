@@ -8,12 +8,13 @@ import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$x;
 
-public class MainPage {
+public class MainPage extends BasePage {
   private final ElementsCollection tableRows = $("#spendings tbody").$$("tr");
   private final SelenideElement canvas = $x("//canvas");
 
-  public void checkThatPageLoaded() {
+  public MainPage checkThatPageLoaded() {
     canvas.shouldBe(visible);
+    return this;
   }
 
   public EditSpendingPage editSpending(String spendingDescription) {

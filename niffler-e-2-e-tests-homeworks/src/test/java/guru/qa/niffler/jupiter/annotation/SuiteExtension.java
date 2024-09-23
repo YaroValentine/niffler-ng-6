@@ -1,4 +1,4 @@
-package guru.qa.niffler.jupiter.annotations;
+package guru.qa.niffler.jupiter.annotation;
 
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
