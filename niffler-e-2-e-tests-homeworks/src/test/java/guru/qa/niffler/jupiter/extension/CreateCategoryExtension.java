@@ -3,9 +3,13 @@ package guru.qa.niffler.jupiter.extension;
 import guru.qa.niffler.Utils;
 import guru.qa.niffler.api.SpendApiClient;
 import guru.qa.niffler.jupiter.annotation.Category;
+import guru.qa.niffler.jupiter.annotation.User;
 import guru.qa.niffler.model.CategoryJson;
+import org.apache.commons.lang3.ArrayUtils;
 import org.junit.jupiter.api.extension.*;
 import org.junit.platform.commons.support.AnnotationSupport;
+
+import static guru.qa.niffler.RandomDataUtils.randomCategoryName;
 
 public class CreateCategoryExtension implements
     BeforeEachCallback,
@@ -20,21 +24,33 @@ public class CreateCategoryExtension implements
   public void beforeEach(ExtensionContext context) throws Exception {
     // Set Up:
     // Add random category before test
-    AnnotationSupport.findAnnotation(context.getRequiredTestMethod(), Category.class)
-        .ifPresent(annotation -> {
-          CategoryJson category = new CategoryJson(
-              null,
-              Utils.generateRandomString(10),
-              annotation.username(),
-              annotation.archived()
-          );
+    AnnotationSupport.findAnnotation(context.getRequiredTestMethod(), User.class)
+        .ifPresent(userAnno -> {
+          if (ArrayUtils.isNotEmpty(userAnno.categories())) {
+            Category categoryAnno = userAnno.categories()[0];
+            CategoryJson category = new CategoryJson(
+                null,
+                randomCategoryName(),
+                userAnno.username(),
+                categoryAnno.archived()
+            );
 
-          CategoryJson createdCategory = spendApiClient.addCategory(category);
+            CategoryJson created = spendApiClient.addCategory(category);
+            if (categoryAnno.archived()) {
+              CategoryJson archivedCategory = new CategoryJson(
+                  created.id(),
+                  created.name(),
+                  created.username(),
+                  true
+              );
+              created = spendApiClient.updateCategory(archivedCategory);
+            }
 
-          context.getStore(NAMESPACE).put(
-              context.getUniqueId(),
-              createdCategory
-          );
+            context.getStore(NAMESPACE).put(
+                context.getUniqueId(),
+                created
+            );
+          }
         });
   }
 

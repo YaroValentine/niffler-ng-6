@@ -1,6 +1,7 @@
 package guru.qa.niffler.test.web;
 
 import com.github.javafaker.Faker;
+import guru.qa.niffler.RandomDataUtils;
 import guru.qa.niffler.config.Config;
 import guru.qa.niffler.jupiter.annotation.meta.WebTest;
 import guru.qa.niffler.jupiter.extension.BrowserExtension;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import static com.codeborne.selenide.Selenide.open;
+import static guru.qa.niffler.RandomDataUtils.*;
 
 @WebTest
 public class RegistrationWebTests {
@@ -17,7 +19,7 @@ public class RegistrationWebTests {
 
   @Test
   void shouldRegisterNewUser() {
-    final String username = new Faker().name().username();
+    final String username = randomUsername();
     final String password = "secret";
 
     open(CFG.frontUrl(), LoginPage.class)
@@ -29,7 +31,7 @@ public class RegistrationWebTests {
 
   @Test
   void shouldNotRegisterUserWithExistingUsername() {
-    final String username = new Faker().name().username();
+    final String username = randomUsername();
     final String password = "secret";
 
     // Register First User
@@ -49,7 +51,7 @@ public class RegistrationWebTests {
 
   @Test
   void shouldShowErrorIfPasswordAndConfirmPasswordAreNotEqual() {
-    final String username = new Faker().name().username();
+    final String username = randomUsername();
     final String password1 = "secret";
     final String password2 = "terces";
 

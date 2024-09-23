@@ -1,12 +1,14 @@
 package guru.qa.niffler.test.web;
 
 import com.github.javafaker.Faker;
+import guru.qa.niffler.RandomDataUtils;
 import guru.qa.niffler.config.Config;
 import guru.qa.niffler.jupiter.annotation.meta.WebTest;
 import guru.qa.niffler.page.LoginPage;
 import org.junit.jupiter.api.Test;
 
 import static com.codeborne.selenide.Selenide.open;
+import static guru.qa.niffler.RandomDataUtils.*;
 
 @WebTest
 public class LoginTest {
@@ -15,7 +17,7 @@ public class LoginTest {
 
   @Test
   void mainPageShouldBeDisplayedAfterSuccessLogin() {
-    final String username = new Faker().name().username();
+    final String username = randomUsername();
     final String password = "secret";
 
     open(CFG.frontUrl(), LoginPage.class)
@@ -30,7 +32,7 @@ public class LoginTest {
 
   @Test
   void userShouldStayOnLoginPageAfterLoginWithBadCredentials() {
-    final String username = new Faker().name().username();
+    final String username = randomUsername();
     final String password = "secret";
     final String wrongPassword = "terces";
 
