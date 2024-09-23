@@ -1,22 +1,25 @@
 package guru.qa.niffler.test.web;
 
 import com.github.javafaker.Faker;
+import guru.qa.niffler.RandomDataUtils;
 import guru.qa.niffler.config.Config;
+import guru.qa.niffler.jupiter.annotation.meta.WebTest;
 import guru.qa.niffler.jupiter.extension.BrowserExtension;
 import guru.qa.niffler.page.LoginPage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import static com.codeborne.selenide.Selenide.open;
+import static guru.qa.niffler.RandomDataUtils.*;
 
-@ExtendWith(BrowserExtension.class)
+@WebTest
 public class RegistrationWebTests {
 
   private static final Config CFG = Config.getInstance();
 
   @Test
   void shouldRegisterNewUser() {
-    final String username = new Faker().name().username();
+    final String username = randomUsername();
     final String password = "secret";
 
     open(CFG.frontUrl(), LoginPage.class)
@@ -28,7 +31,7 @@ public class RegistrationWebTests {
 
   @Test
   void shouldNotRegisterUserWithExistingUsername() {
-    final String username = new Faker().name().username();
+    final String username = randomUsername();
     final String password = "secret";
 
     // Register First User
@@ -48,7 +51,7 @@ public class RegistrationWebTests {
 
   @Test
   void shouldShowErrorIfPasswordAndConfirmPasswordAreNotEqual() {
-    final String username = new Faker().name().username();
+    final String username = randomUsername();
     final String password1 = "secret";
     final String password2 = "terces";
 
@@ -59,34 +62,4 @@ public class RegistrationWebTests {
         .checkPasswordsShouldBeEqualIsDisplayed();
   }
 
-  @Test
-  void mainPageShouldBeDisplayedAfterSuccessLogin() {
-    final String username = new Faker().name().username();
-    final String password = "secret";
-
-    open(CFG.frontUrl(), LoginPage.class)
-        .clickCreateNewAccount()
-        .fillRegistrationForm(username, password, password)
-        .submitRegistration()
-        .clickSignIn()
-        .login(username, password)
-
-        .mainPage().checkThatPageLoaded();
-  }
-
-  @Test
-  void userShouldStayOnLoginPageAfterLoginWithBadCredentials() {
-    final String username = new Faker().name().username();
-    final String password = "secret";
-    final String wrongPassword = "terces";
-
-    open(CFG.frontUrl(), LoginPage.class)
-        .clickCreateNewAccount()
-        .fillRegistrationForm(username, password, password)
-        .submitRegistration()
-        .clickSignIn()
-        .login(username, wrongPassword)
-
-        .checkBadCredentialsIsDisplayed();
-  }
 }
